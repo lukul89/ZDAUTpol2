@@ -21,6 +21,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.*;
 public class BaseTest {
     WebDriver driver;
@@ -39,9 +41,11 @@ public class BaseTest {
         driver.get(devToUrl);
         wait = new WebDriverWait(driver, 20);
 //        explicitWait = new WebDriverWait(driver, 20);
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        // poczekaj zanim wywalisz error 10 sekund i sprawdzaj co sekunde czy elemen sie nie pojawil
     }
     @Test
-    public void firstTest(){
+    public void selectFirstPostOnWeek(){
         WebElement week = driver.findElement(By.xpath("//a[@href='/top/week']"));
         week.click();
         wait.until(ExpectedConditions.urlToBe("https://dev.to/top/week")); //zanim zaczniesz szukać elementu, poczekaj aż url będzie miał wartość https://dev.to/top/week
@@ -77,6 +81,58 @@ public class BaseTest {
         highlightElement(driver, java);
         java.click();
     }
+
+    @Test
+    public void testPodcast() {
+        WebElement podcast = driver.findElement(By.xpath("//a[@href='/pod']"));
+        podcast.click();
+        wait.until(ExpectedConditions.urlToBe("https://dev.to/pod"));
+        wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.tagName("h3")));
+        List<WebElement> podcastList = driver.findElements(By.tagName("h3"));
+        highlightElement(driver, podcastList.get(3));
+        podcastList.get(3).click();
+
+        wait.until(ExpectedConditions.urlContains("stackpodcast"));
+
+        // znajdujemy cale pole mozliwe do odpalenie podcastu
+        WebElement playArea = driver.findElement(By.className("record-wrapper"));
+        playArea.click();
+
+        WebElement initializing = driver.findElement(By.className("status-message"));
+        wait.until(ExpectedConditions.invisibilityOf(initializing));
+        String playAreaClassAttribute = playArea.getAttribute("class");
+        boolean isPlaying =playAreaClassAttribute.contains("playing");
+
+        assertTrue("Podcast ins't playing", isPlaying);
+
+
+    }
+    // Wersja Krzysztofa
+        @Test
+        public void playFourthPodcast(){
+            WebElement podcastdLink = driver.findElement(By.cssSelector("a[href=\"/pod\"]"));
+            highlightElement(driver, podcastdLink);
+            podcastdLink.click();
+            String targetUrl = "https://dev.to/pod";
+            String cssSelector = "h3";
+            waitForElements(targetUrl, cssSelector);
+            List<WebElement> postTilesList = driver.findElements(By.cssSelector(cssSelector));
+            postTilesList.get(3).click();
+            targetUrl = "stackpodcast";
+            cssSelector = "img[alt=\"Play Button\"]";
+            waitForElements(targetUrl, cssSelector);
+
+            WebElement playButton = driver.findElement(By.className("record-wrapper"));
+            playButton.click();
+
+
+        }
+        private void waitForElements(String targetUrl, String cssSelector) {
+            wait.until(ExpectedConditions.urlContains(targetUrl));
+            wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector(cssSelector)));
+        }
+
+
     @After
     public void cleanUp() {
 //        driver.quit();
