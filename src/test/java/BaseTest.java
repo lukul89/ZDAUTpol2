@@ -1,4 +1,5 @@
 import devToPages.DevToMainPage;
+import devToPages.DevToSearchResultsPage;
 import devToPages.DevToSinglePostPage;
 import devToPages.DevToWeekPage;
 import org.junit.After;
@@ -11,6 +12,7 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -65,18 +67,24 @@ public class BaseTest {
     }
     @Test
     public void searchBarTesting() {
-        WebElement searchBox = driver.findElement(By.id("nav-search"));
+
+        DevToMainPage devToMainPage = new DevToMainPage(driver,wait);
         String searchText = "testing";
-        String searchUrl = "https://dev.to/search?q=";
-        String cssSelector = "h2.crayons-story__title a";
-        searchBox.sendKeys(searchText + Keys.ENTER);
-        wait.until(ExpectedConditions.urlToBe(searchUrl + searchText));
-        wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector(cssSelector)));
-        List<WebElement> postTilesList = driver.findElements(By.cssSelector(cssSelector));
-        for (int i = 0; i < 3; i++) {
-            String message = String.format("Header %d doesn't contain text %s", i, searchText);
-            Assert.assertTrue(message, postTilesList.get(i).getText().toLowerCase().contains(searchText));
-        }
+        DevToSearchResultsPage devToSearchResultsPage = devToMainPage.search(searchText);
+
+        String searchingUrlWithText = devToSearchResultsPage.url + searchText;
+        wait.until(ExpectedConditions.urlToBe(searchingUrlWithText));
+
+        ArrayList<String> postTitlesList = devToSearchResultsPage.getTopThreePostTitles();
+
+       int i = 0;
+       while (i<3){
+           String postTitleText = postTitlesList.get(i);
+           postTitleText = postTitleText.toLowerCase();
+           assertTrue("There's no searching value in post title",postTitleText.contains(searchText));
+           i++;
+       }
+
     }
     @Test
     public void findJavaInNavBar(){
